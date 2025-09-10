@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <!-- Campo para ingresar la expresión aritmética -->
+  <input type="text" id="expresion" placeholder="Ejemplo: 3+5*2" />
+  
+  <!-- Botón para construir el árbol a partir de la expresión -->
+  <button id="btn-construir">Construir Árbol</button>
+  
+  <!-- Botones para recorrer el árbol en preorden y posorden -->
+  <button id="btn-preorden">Preorden</button>
+  <button id="btn-posorden">Posorden</button>
+  
+  <!-- Botón para evaluar la expresión -->
+  <button id="btn-evaluar">Evaluar</button>
+  
+  
+  <!-- Div para mostrar los resultados -->
+  <div>
+    <p><strong>Preorden:</strong> <span id="resultado-preorden"></span></p>
+    <p><strong>Posorden:</strong> <span id="resultado-posorden"></span></p>
+    <p><strong>Evaluación:</strong> <span id="resultado-evaluacion"></span></p>
+  </div>
+
+  <script>
+    // Clase Nodo que representa cada elemento del árbol de expresión
+    class Nodo {
+      constructor(valor) {
+        this.valor = valor; // El valor del nodo (número u operador)
+        this.izquierda = null; // Hijo izquierdo del nodo
+        this.derecha = null; // Hijo derecho del nodo
+      }
+    }
+
+    // Clase NodoLista que representa los nodos en la pila (para operadores y operandos)
+    class NodoLista {
+      constructor(valor) {
+        this.valor = valor; // El valor del nodo
+        this.siguiente = null; // Puntero al siguiente nodo en la pila
+        this.anterior = null; // Puntero al nodo anterior en la pila
+      }
+    }
+
+    // Clase Pila que implementa la estructura de datos de pila
+    class Pila {
+      constructor() {
+        this.primero = null; // Apunta al primer nodo en la pila
+        this.ultimo = null; // Apunta al último nodo en la pila
+      }
+
+      // Método para agregar un valor a la pila
+      agregar(valor) {
+        const nuevoNodo = new NodoLista(valor); // Creamos un nuevo nodo
+        if (this.ultimo === null) { // Si la pila está vacía
+          this.primero = nuevoNodo; // El primer nodo es el nuevo nodo
+          this.ultimo = nuevoNodo; // El último nodo también es el nuevo nodo
+        } else {
+          nuevoNodo.anterior = this.ultimo; // El nuevo nodo apunta al nodo anterior (último)
+          this.ultimo.siguiente = nuevoNodo; // El último nodo apunta al nuevo nodo
+          this.ultimo = nuevoNodo; // Actualizamos el último nodo
+        }
+      }
+
+      // Método para eliminar y devolver el nodo superior de la pila
+      eliminar() {
+        if (this.ultimo === null) {
+          throw new Error("Pila vacía");
+        }
+        const nodoExtraido = this.ultimo; // Guardamos el último nodo
+        if (this.primero === this.ultimo) { // Si solo hay un nodo
+          this.primero = null; // La pila queda vacía
+          this.ultimo = null;
+        } else {
+          this.ultimo = this.ultimo.anterior; // Movemos el puntero `ultimo` al nodo anterior
+          this.ultimo.siguiente = null; // Desconectamos el nodo eliminado
+        }
+        return nodoExtraido.valor; // Retornamos el valor del nodo eliminado
+      }
+
+      // Método para obtener el valor del nodo superior sin eliminarlo
+      extraerTope() {
+        if (this.ultimo === null) {
+          throw new Error("Pila vacía");
+        }
+        return this.ultimo.valor; // Retorna el valor del último nodo
+      }
+
+      // Método para verificar si la pila está vacía
+      estaVacio() {
+        return this.ultimo === null; // Si `ultimo` es null, la pila está vacía
+      }
+    }
+
+    // Clase ArbolExpresion que representa el árbol de expresión aritmética
+    class ArbolExpresion {
+      constructor() {
+        this.raiz = null; // La raíz del árbol
+      }
+
+      // Método para construir el árbol de expresión a partir de una cadena infija
+      construirArbol(expresion) {
+        const pilaNumeros = new Pila(); // Pila para almacenar números
+        const pilaSignos = new Pila(); // Pila para almacenar operadores
+
+        // Iteramos sobre cada carácter en la expresión
+        for (const char of expresion) {
+          if (/\d/.test(char)) { // Si el carácter es un número
+            pilaNumeros.agregar(new Nodo(Number(char))); // Lo agregamos a la pila de números
+          } else if (this.esOperador(char)) { // Si es un operador
+            // Creamos subárboles con operadores de mayor precedencia
+            while (!pilaSignos.estaVacio() &&
+                   this.precedencia(char) <= this.precedencia(pilaSignos.extraerTope())) {
+              this.crearSubarbol(pilaNumeros, pilaSignos);
+            }
+            pilaSignos.agregar(char); // Agregamos el operador a la pila de operadores
+          }
+        }
+
+        // Creamos los subárboles restantes con los operadores
+        while (!pilaSignos.estaVacio()) {
+          this.crearSubarbol(pilaNumeros, pilaSignos);
+        }
+
+        this.raiz = pilaNumeros.eliminar(); // La raíz del árbol es el último nodo de la pila de números
+      }
+
+      // Método para crear un subárbol con un operador y dos operandos
+      crearSubarbol(pilaNumeros, pilaSignos) {
+        const operador = pilaSignos.eliminar(); // Extraemos el operador
+        const derecha = pilaNumeros.eliminar(); // Extraemos el operando derecho
+        const izquierda = pilaNumeros.eliminar(); // Extraemos el operando izquierdo
+        const nodoOperador = new Nodo(operador); // Creamos un nodo para el operador
+        nodoOperador.izquierda = izquierda; // El hijo izquierdo es el operando izquierdo
+        nodoOperador.derecha = derecha; // El hijo derecho es el operando derecho
+        pilaNumeros.agregar(nodoOperador); // Agregamos el nodo operador a la pila de números
+      }
+
+      // Método para verificar si un carácter es un operador
+      esOperador(char) {
+        return ['+', '-', '*', '/'].includes(char); // Compara si el carácter es uno de los operadores
+      }
+
+      // Método para obtener la precedencia de un operador
+      precedencia(operador) {
+        if (operador === '+' || operador === '-') return 1;
+        if (operador === '*' || operador === '/') return 2;
+        return 0;
+      }
+
+      // Método para recorrer el árbol en preorden (Raíz, Izquierda, Derecha)
+      recorridoPreorden(nodo) {
+        if (nodo) {
+          console.log(nodo.valor); // Imprimimos el valor del nodo
+          this.recorridoPreorden(nodo.izquierda); // Recursión en el hijo izquierdo
+          this.recorridoPreorden(nodo.derecha); // Recursión en el hijo derecho
+        }
+      }
+
+      // Método para recorrer el árbol en posorden (Izquierda, Derecha, Raíz)
+      recorridoPosorden(nodo) {
+        if (nodo) {
+          this.recorridoPosorden(nodo.izquierda); // Recursión en el hijo izquierdo
+          this.recorridoPosorden(nodo.derecha); // Recursión en el hijo derecho
+          console.log(nodo.valor); // Imprimimos el valor del nodo
+        }
+      }
+
+      // Método para evaluar la expresión del árbol
+      evaluar() {
+        return this.evaluarNodo(this.raiz); // Comienza a evaluar desde la raíz
+      }
+
+      // Método recursivo para evaluar el valor de un nodo
+      evaluarNodo(nodo) {
+        if (!isNaN(nodo.valor)) { // Si el valor es un número
+          return nodo.valor;
+        }
+        const izquierda = this.evaluarNodo(nodo.izquierda); // Evaluamos el hijo izquierdo
+        const derecha = this.evaluarNodo(nodo.derecha); // Evaluamos el hijo derecho
+
+        // Aplicamos el operador al resultado de los dos hijos
+        switch (nodo.valor) {
+          case '+': return izquierda + derecha;
+          case '-': return izquierda - derecha;
+          case '*': return izquierda * derecha;
+          case '/': return izquierda / derecha;
+        }
+      }
+    }
+
+    // Crear instancia del árbol de expresión
+    const arbolExpresion = new ArbolExpresion();
+
+    
+    document.getElementById('btn-construir').addEventListener('click', function() {
+      const expresion = document.getElementById('expresion').value; // Obtenemos la expresión del campo de entrada
+      arbolExpresion.construirArbol(expresion); // Construimos el árbol con la expresión ingresada
+      alert('Árbol construido con éxito');
+    });
+
+    // Lógica para recorrer el árbol en preorden
+    document.getElementById('btn-preorden').addEventListener('click', function() {
+      console.log('Recorrido Preorden:');
+      arbolExpresion.recorridoPreorden(arbolExpresion.raiz); // Recorrer en preorden
+    });
+
+    // Lógica para recorrer el árbol en posorden
+    document.getElementById('btn-posorden').addEventListener('click', function() {
+      console.log('Recorrido Posorden:');
+      arbolExpresion.recorridoPosorden(arbolExpresion.raiz); // Recorrer en posorden
+    });
+
+    // Lógica para evaluar la expresión del árbol
+    document.getElementById('btn-evaluar').addEventListener('click', function() {
+      const resultado = arbolExpresion.evaluar(); // Evaluamos el árbol
+      console.log('Resultado de la Evaluación:', resultado);
+    });
+
+
+  </script>
+</body>
+</html>

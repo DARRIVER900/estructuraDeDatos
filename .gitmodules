@@ -1,0 +1,3 @@
+[submodule "estructuraDeDatos"]
+	path = estructuraDeDatos
+	url = https://github.com/DARRIVER900/estructuraDeDatos.git

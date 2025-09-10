@@ -1,0 +1,293 @@
+<form>
+    <label for = 'textcodigo' >Codigo: <input type = 'text' id = 'textcodigo'></label>
+    <label for = 'textnombre' >Nombre: <input type = 'text' id = 'textnombre'></label>
+    <label for = 'textcantidad' >Cantidad: <input type = 'text' id = 'textcantidad' value = '1'></label>
+    <label for = 'textcosto' >Costo: <input type = 'text' id = 'textcosto'></label>
+    <label for = 'textposicion' >Posicion: <input type = 'text' id = 'textposicion' value = '0'></label>
+
+    <button type = 'button' id = 'btnAdd' >Agregar</button>
+    <button type = 'button' id = 'btnList' >Listar</button>
+    <button type = 'button' id = 'btnSearch' >Buscar</button>
+    <button type = 'reset' id = 'btnDelete' >Eliminar</button>
+    <button type = 'button' id = 'btnInsert' >Insertar</button>
+    <button type = 'button' id = 'btnExtractFirst' >ExtraerPrimero</button>
+    <button type = 'button' id = 'btnExtractLast' >ExtraerUltimo</button>
+
+</form>
+
+<div id = 'detalles' ></div>
+
+<script>
+    class Productos {
+    constructor(codigo, nombre, cantidad, costo) {
+        this.codigo = codigo;
+        this.nombre = nombre;
+        this.cantidad = cantidad;
+        this.costo = costo;
+        this.siguiente = null;
+    }
+    info() {
+        return "El producto " + this.nombre + "tiene este codigo " + this.codigo + "se encuentra en inventario esta cantidad " + this.cantidad + "y tiene este costo " + this.costo;
+    }
+    infoHtml(){
+        return `<h3>${this.nombre}</h3><p>${this.codigo}</p><h4>${this.cantidad}</h4><p>${this.costo}</p>`;
+      }
+}
+
+class Inventario {
+    constructor(){
+        this.primero = null;
+        this.ult = null;
+    }
+
+    agregar(nuevoproducto){
+        let resultado = this._buscar(nuevoproducto.codigo);
+        if(resultado != null){
+            return null;
+        }
+        if(this.primero == null){ // si no existe un producto, agrego uno
+            this.primero = nuevoproducto;
+        } else { // si ya existe un producto(nuevo) le agrego otro mas al nuevo
+            this._agregate(nuevoproducto, this.primero);
+        }
+        return true;
+        }
+        _agregate(nuevoProducto, nodoX) {
+            if (nodoX.siguiente != null) {
+                this._agregate(nuevoProducto, nodoX.siguiente);
+            } else {
+                nodoX.siguiente = nuevoProducto;
+            }
+        }
+
+    listar(){
+        let resultado = "";
+        let aux = this.primero;
+        while(aux != null ){
+            resultado += aux.info();
+            aux = aux.siguiente;
+        }
+        return resultado;
+    }
+// eliminar el primero
+// si el elemento que yo tengo existe, agarro su codigo y comparo si el codigo que me dan es igual a ese, si es asi retorno true porque quiero verificar la eliminacion
+    eliminar(codigo){
+        let aux = this.primero;
+        while(aux != null){
+            if(aux.codigo == codigo){ 
+                this.primero = aux.siguiente;
+                return true;
+            } // eliminar un elemento al ultimo o al medio
+            if(aux.siguiente.codigo == codigo){
+                aux.siguiente = aux.siguiente.siguiente;
+                return true;
+            }
+            aux = aux.siguiente;
+        }
+        return false;    
+    }
+    // si el primero no tiene nada y la posicion es diferente a 0, no se puede insertar
+    insertar(producto, posicion){
+        if(this.primero == null && posicion != 0){
+            return false;
+        } // y si la posicion es 0 yo agrego el producto un posicion despues de this.primero
+        if(posicion == 0){
+            producto.siguiente = this.primero;
+            this.primero = producto;
+            return true;
+        } // mientras el aux existe y y el contador y la pos -1 es igual. el producto loa grego al siguiente 
+        let aux = this.primero;
+        let contador = 0;
+        while(aux != null){ // agregar al medio o al final
+            if(contador == posicion -1){
+                producto.siguiente = aux.siguiente;
+                aux.siguiente = producto;
+                return true;
+            } // si no cumple esa condicion me voy al siguiengte del siguiente e incremento el contador
+            aux = aux.siguiente;
+            contador++;
+        } // y si la posicion no esta dentro del rango de elementos
+        if(posicion < contador){
+            return false;
+        }
+        return false;
+
+    }
+
+    _buscar(codigo){
+        let aux = this.primero;
+        while(aux != null){
+            if(aux.codigo == codigo){ // si el elemento que yo tengo existe, agarro su codigo y comparo si el codigo que me dan es igual a ese, si es asi retorno mi elemento (this.primero)
+                return aux;
+            } // si no es asi, yo me voy al siguiente elemento que tengo, es decir, del primero al siguiente y asi sucesivamente...
+            aux = aux.siguiente;
+        } // si no cumple con ninguna de las anteriores me va retornar nullo porque no hay ningun codigo 
+
+        return null;
+    }
+
+    buscar(codigo) {
+            let resultado = this._buscar(codigo);
+            if (resultado != null) {
+                return resultado;
+            }
+            return null;
+        }
+
+    extraerPrimero(){
+        if(this.primero == null){
+            return null;
+        }
+        let aux = this.primero;
+        this.primero = this.primero.siguiente;
+
+        if(this.primero == null){
+            this.ultimo = null;
+        }
+        return aux;
+    }
+
+    extraerUltimo(){
+        if(this.primero == null){
+            return null;
+        }
+        if(this.primero == this.ultimo){
+            let ult = this.ultimo;
+            this.primero = null;
+            this.ultimo = null;
+            return ult;
+        }
+        let aux = this.primero;
+        while(aux.siguiente != this.ultimo){
+            aux = aux.siguiente;
+        } 
+        let ultPro = this.ultimo;
+        this.ultimo = aux;
+        this.ultimo.siguiente = null;
+        return ultPro;
+    }
+}
+
+let inventario = new Inventario();
+let nuevo = new Productos("3456", "Jabon", 45, 23);
+inventario.agregar(nuevo);
+
+nuevo = new Productos("8775", "Vaso", 3, 55);
+inventario.agregar(nuevo);
+
+inventario.eliminar("8775");
+inventario.buscar("3456");
+
+
+inventario.insertar(nuevo, 2);
+inventario.listar(nuevo);
+
+inventario.extraerPrimero();
+inventario.extraerUltimo();
+
+
+
+const btnAdd = document.getElementById('btnAdd');
+btnAdd.addEventListener('click', () => {
+    let codigo = document.getElementById('textcodigo').value;
+    let nombre = document.getElementById('textnombre').value;
+    let cantidad = document.getElementById('textcantidad').value;
+    let costo = document.getElementById('textcosto').value;
+    let nuevoproducto = new Productos(codigo, nombre, cantidad, costo);
+
+    inventario.agregar(nuevoproducto);
+    let div = document.getElementById('detalles');
+    div.innerHTML = "<p> Se agrego </p>" + nuevoproducto.infoHtml();
+
+});
+
+const btnList = document.getElementById('btnList');
+btnList.addEventListener('click', () => {
+    
+    let texto = inventario.listar();
+    let div = document.getElementById('detalles');
+    div.innerHTML = "<p> Se listo </p><" + texto;
+
+});
+
+const btnSearch = document.getElementById('btnSearch');
+btnSearch.addEventListener('click', () => {
+    
+    let codigo = document.getElementById('textcodigo').value;
+    let busqueda = inventario.buscar(codigo);
+    let div = document.getElementById('detalles');
+
+    if(busqueda){
+        div.innerHTML = "<p>Resultados encontrados:</p>" + busqueda.infoHtml();
+    }else{
+        div.innerHTML = "<p>Resultados no encontrados:</p>";
+    }
+    
+
+});
+
+const btnDelete = document.getElementById('btnDelete');
+btnDelete.addEventListener('click', () => {
+    let codigo = document.getElementById('textcodigo').value;
+    let eliminar = inventario.eliminar(codigo);
+    let div = document.getElementById('detalles');
+    
+    if(eliminar){
+        div.innerHTML = "<p>Producto eliminado</p>";
+    } else {
+        div.innerHTML = "<p>No se encontro producto para eliminar</p>";
+    }
+    
+
+});
+
+const btnInsert = document.getElementById('btnInsert');
+btnInsert.addEventListener('click', () => {
+    let codigo = document.getElementById('textcodigo').value;
+    let nombre = document.getElementById('textnombre').value;
+    let cantidad = document.getElementById('textcantidad').value;
+    let costo = document.getElementById('textcosto').value
+    let posicion = document.getElementById('textposicion').value;
+    let producto = new Productos(codigo, nombre, cantidad, costo);
+    let insertar = inventario.insertar(producto, posicion);
+    let div = document.getElementById('detalles');
+
+    if(insertar){
+        div.innerHTML = "<p>Producto insertado en la posición</p>" + producto.nombre + "en la posicion" + posicion + "</p>";
+    } else {
+        div.innerHTML = "<p>Producto no insertado</p";
+
+    }
+    
+
+});
+
+const btnExtractFirst = document.getElementById('btnExtractFirst');
+btnExtractFirst.addEventListener('click', () => {
+    let codigo = document.getElementById('textcodigo').value;
+    let extraer = inventario.extraerPrimero(codigo);
+    let div = document.getElementById('detalles');
+
+    if(extraer){
+        div.innerHTML = "<p>Primer producto extraido</p>" + extraer.infoHtml();
+    } else{
+        div.innerHTML = "<p>No se pudo extraer</p>";
+    }
+    
+});
+
+const btnExtractLast = document.getElementById('btnExtractLast');
+btnExtractLast.addEventListener('click', () => {
+    let codigo = document.getElementById('textcodigo').value;
+    let extraer = inventario.extraerUltimo(codigo);
+    let div = document.getElementById('detalles');
+
+    if(extraer){
+        div.innerHTML = "<p>Ultimo producto extraido</p>" + extraer.infoHtml();
+    } else{
+        div.innerHTML = "<p>No se pudo extraer</p>";
+    }
+    
+});
+
+</script>

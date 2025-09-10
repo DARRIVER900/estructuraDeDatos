@@ -1,0 +1,336 @@
+<form>
+    <label for="txtcodigo">Codigo:<input type="text" id="txtcodigo"></label>
+    <label for="txtnombre">Nombre:<input type="text" id="txtnombre"></label>
+    <label for="txtcantidad">Cantidad:<input type="number" id="txtcantidad" value="1"></label>
+    <label for="txtcosto">Costo:<input type="number" id="txtcosto"></label>
+    <label for="txtposicion">Posición:<input type="number" id="txtposicion" value="0"></label>
+    <button type="button" id="btnAdd">Agregar</button>
+    <button type="button" id="btnSearch">Buscar</button>
+    <button type="button" id="btnDelete">Eliminar</button>
+    <button type="button" id="btnInsert">Insertar</button>
+    <button type="button" id="btnExtractPrimerElemento">Extraer Primer Elemento</button>
+    <button type="button" id="btnExtractUltimoElemento">Extraer Último Elemento</button>
+    <button type="button" id="btnList">Listar</button>
+    <button type="button" id="btnListInverso">Listar Inverso</button>
+    <button type="reset">Cancelar</button>
+</form>
+
+<div id="detalles"></div>
+
+<script>
+    // Clase Producto
+    class Producto {
+        constructor(codigo, nombre, cantidad, costo) {
+            this.codigo = codigo;
+            this.nombre = nombre;
+            this.cantidad = cantidad;
+            this.costo = costo;
+            this.siguiente = null; // Puntero al siguiente nodo
+            this.anterior = null;  // Puntero al nodo anterior
+        }
+
+        info() {
+            return `Producto ${this.codigo} : ${this.nombre} : ${this.cantidad} : ${this.costo}`;
+        }
+
+        infoHtml() {
+            return `<h3>${this.codigo}</h3><p>${this.nombre}</p><p>${this.cantidad}</p><p>${this.costo}</p>`;
+        }
+    }
+
+    // Clase Inventario (Lista Doblemente Enlazada)
+    class Inventario {
+        constructor() {
+            this.primero = null;
+        }
+
+        // Método privado para buscar un nodo por código
+        _buscar(codigo) {
+            let actual = this.primero;
+            while (actual !== null) {
+                if (actual.codigo === codigo) {
+                    return actual; // Nodo encontrado
+                }
+                actual = actual.siguiente;
+            }
+            return null; // No encontrado
+        }
+
+        // Agregar un producto de forma ordenada
+        agregar(nuevoProducto) {
+            // Verificar si el producto ya existe
+            if (this._buscar(nuevoProducto.codigo) !== null) {
+                return false; // No se puede agregar, el producto ya está en la lista
+            }
+
+            // Si la lista está vacía
+            if (this.primero === null) {
+                this.primero = nuevoProducto;
+                return true;
+            }
+
+            // Si el nuevo producto debe ir al inicio
+            if (nuevoProducto.codigo < this.primero.codigo) {
+                nuevoProducto.siguiente = this.primero;
+                this.primero.anterior = nuevoProducto;
+                this.primero = nuevoProducto;
+                return true;
+            }
+
+            // Insertar en la posición correcta
+            let actual = this.primero;
+            while (actual.siguiente !== null && actual.siguiente.codigo < nuevoProducto.codigo) {
+                actual = actual.siguiente;
+            }
+
+            // Insertar después del nodo actual
+            nuevoProducto.siguiente = actual.siguiente;
+            nuevoProducto.anterior = actual;
+            if (actual.siguiente !== null) {
+                actual.siguiente.anterior = nuevoProducto;
+            }
+            actual.siguiente = nuevoProducto;
+
+            return true;
+        }
+
+        // Buscar un producto por su código
+        buscar(codigo) {
+            return this._buscar(codigo);
+        }
+
+        // Eliminar un producto por su código
+        eliminar(codigo) {
+            let nodoAEliminar = this._buscar(codigo);
+            if (nodoAEliminar === null) {
+                return false; // Producto no encontrado
+            }
+
+            // Ajustar los punteros para eliminar el nodo
+            if (nodoAEliminar === this.primero) {
+                this.primero = nodoAEliminar.siguiente;
+                if (this.primero !== null) {
+                    this.primero.anterior = null;
+                }
+            } else {
+                nodoAEliminar.anterior.siguiente = nodoAEliminar.siguiente;
+                if (nodoAEliminar.siguiente !== null) {
+                    nodoAEliminar.siguiente.anterior = nodoAEliminar.anterior;
+                }
+            }
+
+            return true; // Nodo eliminado con éxito
+        }
+
+        // Insertar un producto en una posición específica
+        insertar(nuevoProducto, posicion) {
+            if (posicion === 0) {
+                nuevoProducto.siguiente = this.primero;
+                if (this.primero !== null) {
+                    this.primero.anterior = nuevoProducto;
+                }
+                this.primero = nuevoProducto;
+                return true;
+            }
+
+            let actual = this.primero;
+            let contador = 0;
+
+            // Buscar la posición
+            while (actual !== null && contador < posicion - 1) {
+                actual = actual.siguiente;
+                contador++;
+            }
+
+            if (actual === null) {
+                return false; // Posición no válida
+            }
+
+            nuevoProducto.siguiente = actual.siguiente;
+            nuevoProducto.anterior = actual;
+            if (actual.siguiente !== null) {
+                actual.siguiente.anterior = nuevoProducto;
+            }
+            actual.siguiente = nuevoProducto;
+
+            return true;
+        }
+
+        // Extraer y devolver el primer elemento
+        extraerPrimerElemento() {
+            if (this.primero === null) {
+                return null; // Lista vacía
+            }
+
+            let primerProducto = this.primero;
+            this.primero = this.primero.siguiente;
+
+            if (this.primero !== null) {
+                this.primero.anterior = null;
+            }
+
+            return primerProducto;
+        }
+
+        // Extraer y devolver el último elemento
+        extraerUltimoElemento() {
+            if (this.primero === null) {
+                return null; // Lista vacía
+            }
+
+            let actual = this.primero;
+            if (actual.siguiente === null) {
+                this.primero = null; // Solo un elemento en la lista
+                return actual;
+            }
+
+            // Recorrer hasta el penúltimo nodo
+            while (actual.siguiente.siguiente !== null) {
+                actual = actual.siguiente;
+            }
+
+            let ultimoProducto = actual.siguiente;
+            actual.siguiente = null;
+            return ultimoProducto;
+        }
+
+        // Listar los productos en orden
+        listar() {
+            let resultado = "";
+            let actual = this.primero;
+            while (actual !== null) {
+                resultado += actual.info() + "\n";
+                actual = actual.siguiente;
+            }
+            return resultado;
+        }
+
+        // Listar los productos en orden inverso
+        listarInverso() {
+            let actual = this.primero;
+            if (actual === null) return ""; // Lista vacía
+
+            // Ir al último nodo
+            while (actual.siguiente !== null) {
+                actual = actual.siguiente;
+            }
+
+            // Recorrer hacia atrás
+            let resultado = "";
+            while (actual !== null) {
+                resultado += actual.info() + "\n";
+                actual = actual.anterior;
+            }
+            return resultado;
+        }
+    }
+
+    // Inicialización de la clase Inventario
+    let inventario = new Inventario();
+
+    // Botón de Agregar
+    const btnAdd = document.getElementById("btnAdd");
+    btnAdd.addEventListener('click', () => {
+        let codigo = document.getElementById("txtcodigo").value;
+        let nombre = document.getElementById("txtnombre").value;
+        let cantidad = document.getElementById("txtcantidad").value;
+        let costo = document.getElementById("txtcosto").value;
+        let nuevo = new Producto(codigo, nombre, cantidad, costo);
+
+        let productoAgregado = inventario.agregar(nuevo);
+        let div = document.getElementById("detalles");
+
+        if (productoAgregado) {
+            div.innerHTML = "<p>Producto agregado:</p>" + nuevo.infoHtml();
+        } else {
+            div.innerHTML = "<p>Producto ya existente</p>";
+        }
+    });
+
+    // Botón de Buscar
+    const btnSearch = document.getElementById("btnSearch");
+    btnSearch.addEventListener('click', () => {
+        let codigo = document.getElementById("txtcodigo").value;
+        let productoEncontrado = inventario.buscar(codigo);
+        let div = document.getElementById("detalles");
+
+        if (productoEncontrado) {
+            div.innerHTML = "<p>Producto encontrado:</p>" + productoEncontrado.infoHtml();
+        } else {
+            div.innerHTML = "<p>Producto no encontrado</p>";
+        }
+    });
+
+    // Botón de Eliminar
+    const btnDelete = document.getElementById("btnDelete");
+    btnDelete.addEventListener('click', () => {
+        let codigo = document.getElementById("txtcodigo").value;
+        let productoEliminado = inventario.eliminar(codigo);
+        let div = document.getElementById("detalles");
+
+        if (productoEliminado) {
+            div.innerHTML = "<p>Producto eliminado</p>";
+        } else {
+            div.innerHTML = "<p>Producto no encontrado</p>";
+        }
+    });
+
+    // Botón de Insertar
+    const btnInsert = document.getElementById("btnInsert");
+    btnInsert.addEventListener('click', () => {
+        let codigo = document.getElementById("txtcodigo").value;
+        let nombre = document.getElementById("txtnombre").value;
+        let cantidad = document.getElementById("txtcantidad").value;
+        let costo = document.getElementById("txtcosto").value;
+        let nuevo = new Producto(codigo, nombre, cantidad, costo);
+        let posicion = document.getElementById("txtposicion").value;
+
+        let productoInsertado = inventario.insertar(nuevo, posicion);
+        let div = document.getElementById("detalles");
+
+        if (productoInsertado) {
+            div.innerHTML = `<p>Producto insertado en la posición ${posicion}</p>`;
+        } else {
+            div.innerHTML = "<p>No se pudo insertar el producto</p>";
+        }
+    });
+
+    // Botón de Extraer el Primer Elemento
+    const btnExtractPrimerElemento = document.getElementById("btnExtractPrimerElemento");
+    btnExtractPrimerElemento.addEventListener('click', () => {
+        let productoExtraido = inventario.extraerPrimerElemento();
+        let div = document.getElementById("detalles");
+
+        if (productoExtraido) {
+            div.innerHTML = "<p>Producto extraído:</p>" + productoExtraido.infoHtml();
+        } else {
+            div.innerHTML = "<p>No hay productos para extraer</p>";
+        }
+    });
+
+    // Botón de Extraer el Último Elemento
+    const btnExtractUltimoElemento = document.getElementById("btnExtractUltimoElemento");
+    btnExtractUltimoElemento.addEventListener('click', () => {
+        let productoExtraido = inventario.extraerUltimoElemento();
+        let div = document.getElementById("detalles");
+
+        if (productoExtraido) {
+            div.innerHTML = "<p>Producto extraído:</p>" + productoExtraido.infoHtml();
+        } else {
+            div.innerHTML = "<p>No hay productos para extraer</p>";
+        }
+    });
+
+    // Botón de Listar productos
+    const btnList = document.getElementById("btnList");
+    btnList.addEventListener('click', () => {
+        console.log(inventario.listar());
+    });
+
+    // Botón de Listar productos en orden inverso
+    const btnListInverso = document.getElementById("btnListInverso");
+    btnListInverso.addEventListener('click', () => {
+        console.log(inventario.listarInverso());
+    });
+</script>
+

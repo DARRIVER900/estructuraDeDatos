@@ -1,0 +1,242 @@
+<form> 
+    <label for="textcodigo">Codigo:<input type="text" id="textcodigo" value="1"></label>
+    <label for="textnombre">Nombre:<input type="text" id="textnombre" value="1"></label>
+    <label for="textcantidad">Cantidad:<input type="text" id="textcantidad" value="1"></label>
+    <label for="textcosto">Costo:<input type="text" id="textcosto" value="1"></label>
+    
+
+    <button type="button" id="btnAdd">Agregar</button>
+    <button type="button" id="btnList">Listar</button>
+    <button type="button" id="btnListInverted">Listar Inverso</button>
+    <button type="button" id="btnSearch">Buscar</button>
+    <button type="reset" id="btnDelete">Eliminar</button>
+    <button type="button" id="btnExtract">Extraer</button>
+    <button type="button" id="btnExtractLastItem">Extraer Último Elemento</button>
+</form>
+
+<div id="detalles"></div>
+
+<script>
+class Productos {
+    constructor(codigo, nombre, cantidad, costo) {
+        this.codigo = codigo;
+        this.nombre = nombre;
+        this.cantidad = cantidad;
+        this.costo = costo;
+    }
+    info() {
+        return " El producto " + this.nombre + " tiene este codigo " + this.codigo + " se encuentra en inventario esta cantidad " + this.cantidad + " y tiene este costo " + this.costo;
+    }
+    infoHtml(){
+        return `<h3>${this.nombre}</h3><p>${this.codigo}</p><h4>${this.cantidad}</h4><p>${this.costo}</p>`;
+      }
+}
+
+class Inventario{
+    constructor(){
+        this.datos = [];
+    }
+
+    agregar(nuevoproducto){
+        if(this.datos.length == 0){
+            this.datos.push(nuevoproducto);
+            return true;
+        }
+        console.log("2");
+        if (this._buscarBinaria(nuevoproducto.codigo)!=-1)
+           return false;
+						console.log("sigue agregar")
+           for(let i = 0; i <  this.datos.length; i++){
+            if(this.datos[i].codigo > nuevoproducto.codigo){ //si mis productos son mayores a mi producto nuevo , muevo posiciones
+                for(let j = this.datos.length; j > i; j--){
+                    this.datos[j] = this.datos[j - 1];
+                }
+                this.datos[i] = nuevoproducto;
+                return true;
+            }
+        }
+        // si el productonuevo es mayor a los productos que ya tengo 
+        this.datos.push(nuevoproducto);
+        return true;
+    }
+
+    _buscarBinaria(codigo) {
+        let min = 0;
+        let max = this.datos.length-1;
+        while(min <= max) {
+            const mitad = Math.floor((min + max)/2);
+            if(this.datos[mitad].codigo > codigo){
+                max = mitad - 1;
+            } else if(this.datos[mitad].codigo < codigo){
+                min = mitad + 1;
+            }else {
+                return mitad;
+            }                 
+        }
+        return -1;       
+    }
+
+    buscar(codigo){
+        let resultado = this._buscarBinaria(codigo);
+        if(resultado != -1){
+            return this.datos[resultado];
+        } else{
+            return null;
+        }
+
+    }
+
+    eliminar(codigo){
+        let resultado = this._buscarBinaria(codigo);
+        if(resultado != -1){
+            for(let i = resultado; i < this.datos.length -1; i++){
+                this.datos[i] = this.datos[i + 1];
+            }
+            this.datos.pop();
+            return true;
+        }
+    }
+
+    listar(){
+        let texto = "";
+        for(let i = 0; i < this.datos.length; i++){
+            texto += this.datos[i].info() + "\n";
+        }
+        return texto;
+    }
+
+    listarInversamente(){
+        let texto = ""; // guarda info de productos
+        for(let i = this.datos.length -1; i >= 0; i--){ //recorre desde el ultimo hasta el primero
+            texto += this.datos[i].info() + "\n"; //añade la info del elemento
+        }
+        return texto;
+    }
+
+
+    extraer(codigo) {
+        if(this.datos.length == 0){
+            return null; // si esta vacio no se extrae nada
+        }
+        let primerelemento = this.datos[0]; // primer elemento
+        for(let i = 0; i < this.datos.length; i++){ //recorre los elementos 
+            this.datos[i] = this.datos[i + 1]; // los desplaza a la izquierda 
+        }
+        this.datos.pop(); //elimina el ultimo elemento si esta duplicado
+        return primerelemento;   //devuelve el primer elemento
+    } 
+    
+    extraerUltimoElemento(codigo){
+        if(this.datos.length == 0){ //si esta vacio no se extrae nada
+            return null;
+        }
+        let ultimoelemento = this.datos[this.datos.length -1]; //extrae
+        this.datos.pop(); //elimina
+        return ultimoelemento; //devuelve el ultimo elemento
+    }
+}
+
+let inventario = new Inventario();
+let nuevo = new Productos(3456, "Jabon", 45, 23);
+inventario.agregar(nuevo);
+inventario.eliminar(nuevo);
+inventario.buscar(nuevo);
+inventario.extraer(nuevo);
+inventario.listar(nuevo);
+inventario.listarInversamente(nuevo);
+inventario.extraerUltimoElemento(nuevo);
+
+const btnAdd = document.getElementById('btnAdd');
+btnAdd.addEventListener('click', () => {
+    let codigo = parseInt(document.getElementById('textcodigo').value);
+    let nombre = document.getElementById('textnombre').value;
+    let cantidad = document.getElementById('textcantidad').value;
+    let costo = document.getElementById('textcosto').value;
+    let nuevoproducto = new Productos(codigo, nombre, cantidad, costo);
+
+    inventario.agregar(nuevoproducto);
+    let div = document.getElementById('detalles');
+    div.innerHTML = "<p> Se agrego </p>" + nuevoproducto.infoHtml();
+
+});
+
+const btnList = document.getElementById('btnList');
+btnList.addEventListener('click', () => {
+  
+    let texto = inventario.listar();
+    let div = document.getElementById('detalles');
+    div.innerHTML = "<p> Se listo </p><" + texto;
+ 		console.log(inventario.listar());
+
+});
+
+const btnListInverted = document.getElementById('btnListInverted');
+btnListInverted.addEventListener('click', () => {
+  
+  
+    let texto = inventario.listar();
+    let div = document.getElementById('detalles');
+    div.innerHTML = "<p> Se listo </p><" + texto;
+    console.log(inventario.listarInversamente());
+
+});
+
+const btnSearch = document.getElementById('btnSearch');
+btnSearch.addEventListener('click', () => {
+    
+    let codigo = document.getElementById('textcodigo').value;
+    let busqueda = inventario.buscar(codigo);
+    let div = document.getElementById('detalles');
+
+    if(busqueda){
+        div.innerHTML = "<p>Resultados encontrados:</p>" + busqueda.infoHtml();
+    }else{
+        div.innerHTML = "<p>Resultados no encontrados:</p>";
+    }
+    
+
+});
+
+const btnDelete = document.getElementById('btnDelete');
+btnDelete.addEventListener('click', () => {
+    let codigo = document.getElementById('textcodigo').value;
+    let eliminar = inventario.eliminar(codigo);
+    let div = document.getElementById('detalles');
+    
+    if(eliminar){
+        div.innerHTML = "<p>Producto eliminado</p>";
+    } else {
+        div.innerHTML = "<p>No se encontro producto para eliminar</p>";
+    }
+    
+
+});
+
+const btnExtract = document.getElementById('btnExtract');
+btnExtract.addEventListener('click', () => {
+    let codigo = document.getElementById('textcodigo').value;
+    let extraer = inventario.extraer(codigo);
+    let div = document.getElementById('detalles');
+
+    if(extraer){
+        div.innerHTML = "<p>Primer producto extraido</p>" + extraer.infoHtml();
+    } else{
+        div.innerHTML = "<p>No se pudo extraer</p>";
+    }
+    
+});
+
+const btnExtractLastItem = document.getElementById('btnExtractLastItem');
+btnExtractLastItem.addEventListener('click', () => {
+    let codigo = document.getElementById('textcodigo').value;
+    let extraer = inventario.extraer(codigo);
+    let div = document.getElementById('detalles');
+
+    if(extraer){
+        div.innerHTML = "<p>Ultimo producto extraido</p>" + extraer.infoHtml();
+    } else{
+        div.innerHTML = "<p>No se pudo extraer</p>";
+    }
+    
+});
+</script>

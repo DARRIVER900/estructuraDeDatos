@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<body>
+  <input type="text" id="expresion" placeholder="Ejemplo: 3+5*2" />
+  <button id="btn-construir">Construir Árbol</button>
+  <button id="btn-preorden">Preorden</button>
+  <button id="btn-posorden">Posorden</button>
+  <button id="btn-evaluar">Evaluar</button>
+  <div>
+    <p><strong>Preorden:</strong> <span id="resultado-preorden"></span></p>
+    <p><strong>Posorden:</strong> <span id="resultado-posorden"></span></p>
+    <p><strong>Evaluación:</strong> <span id="resultado-evaluacion"></span></p>
+  </div>
+
+  <script>
+    // Clase Nodo para representar cada nodo en el árbol de expresión
+    class Nodo {
+      constructor(valor) {
+        this.valor = valor;
+        this.izquierda = null;
+        this.derecha = null;
+      }
+    }
+
+    // Clase NodoLista para representar nodos en la pila
+    class NodoLista {
+      constructor(valor) {
+        this.valor = valor;
+        this.siguiente = null;
+        this.anterior = null;
+      }
+    }
+
+    // Clase Pila para gestionar la pila de nodos
+    class Pila {
+      constructor() {
+        this.primero = null;
+        this.ultimo = null;
+      }
+
+      // Método para agregar un nodo a la pila
+      agregar(valor) {
+        const nuevoNodo = new NodoLista(valor);
+        if (this.ultimo === null) {
+          this.primero = nuevoNodo;
+          this.ultimo = nuevoNodo;
+        } else {
+          nuevoNodo.anterior = this.ultimo;
+          this.ultimo.siguiente = nuevoNodo;
+          this.ultimo = nuevoNodo;
+        }
+      }
+
+      // Método para eliminar el nodo superior de la pila
+      eliminar() {
+        if (this.ultimo === null) {
+          return null;
+        }
+        const nodoExtraido = this.ultimo;
+        if (this.primero === this.ultimo) {
+          this.primero = null;
+          this.ultimo = null;
+        } else {
+          this.ultimo = this.ultimo.anterior;
+          this.ultimo.siguiente = null;
+        }
+        return nodoExtraido.valor;
+      }
+
+      // Método para extraer el valor del nodo superior sin eliminarlo
+      extraerTope() {
+        if (this.ultimo === null) {
+          return null;
+        }
+        return this.ultimo.valor;
+      }
+
+      // Método para comprobar si la pila está vacía
+      estaVacio() {
+        return this.ultimo === null;
+      }
+    }
+
+    // Clase ArbolExpresion para construir y manipular el árbol de expresión
+    class ArbolExpresion {
+      constructor() {
+        this.raiz = null;
+      }
+
+      // Método para construir el árbol a partir de la expresión aritmética
+      construirArbol(expresion) {
+        const pilaNumeros = new Pila();
+        const pilaSignos = new Pila();
+
+        // Recorre cada carácter de la expresión usando un ciclo for tradicional
+        for (let i = 0; i < expresion.length; i++) {
+          const char = expresion[i];
+
+          // Si el carácter es un número, lo agrega a la pila de números
+          if (/\d/.test(char)) {
+            pilaNumeros.agregar(new Nodo(Number(char)));
+          } else if (this.esOperador(char)) {
+            // Si el carácter es un operador, se procesan los operadores en la pila de acuerdo a su precedencia
+            while (!pilaSignos.estaVacio() &&
+                   this.precedencia(char) <= this.precedencia(pilaSignos.extraerTope())) {
+              this.crearSubarbol(pilaNumeros, pilaSignos);
+            }
+            pilaSignos.agregar(char); // Agrega el operador a la pila de operadores
+          }
+        }
+
+        // Procesa los operadores restantes en la pila
+        while (!pilaSignos.estaVacio()) {
+          this.crearSubarbol(pilaNumeros, pilaSignos);
+        }
+
+        // El resultado final es el nodo raíz del árbol
+        this.raiz = pilaNumeros.eliminar();
+      }
+
+      // Método para crear un subárbol con el operador y sus operandos
+      crearSubarbol(pilaNumeros, pilaSignos) {
+        const operador = pilaSignos.eliminar();  // Extrae el operador
+        const derecha = pilaNumeros.eliminar();  // Extrae el operando derecho
+        const izquierda = pilaNumeros.eliminar(); // Extrae el operando izquierdo
+        const nodoOperador = new Nodo(operador); // Crea un nodo para el operador
+        nodoOperador.izquierda = izquierda;     // Asigna el operando izquierdo
+        nodoOperador.derecha = derecha;         // Asigna el operando derecho
+        pilaNumeros.agregar(nodoOperador);      // Agrega el nodo del operador a la pila
+      }
+
+      // Método para verificar si un carácter es un operador
+      esOperador(char) {
+        return ['+', '-', '*', '/'].includes(char);
+      }
+
+      // Método para determinar la precedencia de un operador
+      precedencia(operador) {
+        if (operador === '+' || operador === '-') {
+          return 1;
+        }
+        if (operador === '*' || operador === '/') {
+          return 2;
+        }
+        return 0;
+      }
+
+      // Recorrido en preorden del árbol de expresión
+      recorridoPreorden(nodo) {
+        let resultado = '';
+        if (nodo) {
+          resultado += nodo.valor + ' ';
+          resultado += this.recorridoPreorden(nodo.izquierda);
+          resultado += this.recorridoPreorden(nodo.derecha);
+        }
+        return resultado;
+      }
+
+      // Recorrido en posorden del árbol de expresión
+      recorridoPosorden(nodo) {
+        let resultado = '';
+        if (nodo) {
+          resultado += this.recorridoPosorden(nodo.izquierda);
+          resultado += this.recorridoPosorden(nodo.derecha);
+          resultado += nodo.valor + ' ';
+        }
+        return resultado;
+      }
+
+      // Método para evaluar el resultado de la expresión aritmética
+      evaluar() {
+        return this.evaluarNodo(this.raiz);
+      }
+
+      // Método auxiliar para evaluar recursivamente cada nodo del árbol
+      evaluarNodo(nodo) {
+        if (nodo.valor === null) {
+          return 0;
+        }
+        if (nodo.valor === '+' || nodo.valor === '-' || nodo.valor === '*' || nodo.valor === '/') {
+          const izquierda = this.evaluarNodo(nodo.izquierda);  // Evalúa el operando izquierdo
+          const derecha = this.evaluarNodo(nodo.derecha);     // Evalúa el operando derecho
+          return this.operar(izquierda, derecha, nodo.valor); // Realiza la operación
+        }
+        return nodo.valor; // Si el nodo es un número, lo retorna
+      }
+
+      // Método para realizar la operación matemática
+      operar(izquierda, derecha, operador) {
+        switch (operador) {
+          case '+': return izquierda + derecha;
+          case '-': return izquierda - derecha;
+          case '*': return izquierda * derecha;
+          case '/': return izquierda / derecha;
+          return 0;
+        }
+      }
+    }
+
+    // Función de inicialización para los eventos de los botones
+    
+      const btnConstruir = document.getElementById('btn-construir');
+      const btnPreorden = document.getElementById('btn-preorden');
+      const btnPosorden = document.getElementById('btn-posorden');
+      const btnEvaluar = document.getElementById('btn-evaluar');
+      const expresionInput = document.getElementById('expresion');
+      const resultadoPreorden = document.getElementById('resultado-preorden');
+      const resultadoPosorden = document.getElementById('resultado-posorden');
+      const resultadoEvaluacion = document.getElementById('resultado-evaluacion');
+      
+      let arbol = new ArbolExpresion();
+
+      // Evento para construir el árbol a partir de la expresión ingresada
+      btnConstruir.addEventListener('click', () => {
+        const expresion = expresionInput.value;
+        arbol.construirArbol(expresion);
+      });
+
+      // Evento para mostrar el recorrido en preorden del árbol
+      btnPreorden.addEventListener('click', () => {
+        resultadoPreorden.textContent = arbol.recorridoPreorden(arbol.raiz);
+      });
+
+      // Evento para mostrar el recorrido en posorden del árbol
+      btnPosorden.addEventListener('click', () => {
+        resultadoPosorden.textContent = arbol.recorridoPosorden(arbol.raiz);
+      });
+
+      // Evento para evaluar la expresión y mostrar el resultado
+      btnEvaluar.addEventListener('click', () => {
+        resultadoEvaluacion.textContent = arbol.evaluar();
+      });
+   
+  </script>
+</body>
+</html>

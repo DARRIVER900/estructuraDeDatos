@@ -1,0 +1,189 @@
+<form>
+    <label for = 'textcodigo' >Codigo: <input type = 'text' id = 'textcodigo' value = '1'></input></label>
+    <label for = 'textnombre' >Nombre: <input type = 'text' id = 'textnombre' value = '1'></input></label>
+    <label for = 'textcantidad' >Cantidad: <input type = 'text' id = 'textcantidad' value = '1'></input></label>
+    <label for = 'textcosto' >Costo: <input type = 'text' id = 'textcosto' value = '1'></input></label>
+
+    <label for = 'textlugarnuevo' >LugarNuevo: <input type = 'text' id = 'textlugarnuevo' value = '1'></input></label>
+
+    <button type = 'button' id = 'btnAdd' >Agregar</button>
+    <button type = 'button' id = 'btnList' >Listar</button>
+    <button type = 'button' id = 'btnSearch' >Buscar</button>
+    <button type = 'reset' id = 'btnDelete' >Eliminar</button>
+    <button type = 'button' id = 'btnInsert' >Insertar</button>
+    <button type = 'button' id = 'btnExtract' >Extraer</button>
+
+</form>
+
+<div id = 'detalles' ></div>
+
+<<script>
+
+
+class Productos {
+    constructor(codigo, nombre, cantidad, costo) {
+        this.codigo = codigo;
+        this.nombre = nombre;
+        this.cantidad = cantidad;
+        this.costo = costo;
+    }
+    info() {
+        return "El producto " + this.nombre + "tiene este codigo " + this.codigo + "se encuentra en inventario esta cantidad " + this.cantidad + "y tiene este costo " + this.costo;
+    }
+    infoHtml(){
+        return `<h3>${this.nombre}</h3><p>${this.codigo}</p><h4>${this.cantidad}</h4><p>${this.costo}</p>`;
+      }
+}
+
+class Inventario{
+    constructor(){
+        this.datos = [];
+    }
+
+    agregar(nuevoproducto) {
+        this.datos.push(nuevoproducto);
+    }
+
+    buscar(codigo) {
+        for(let i = 0; i < this.datos.length; i++){
+            if(codigo == this.datos[i].codigo){
+                return this.datos[i];
+            }
+        }
+        return null;
+    }
+
+    eliminar(codigo){
+        for(let i = 0; i < this.datos.length; i++){
+            if(codigo == this.datos[i].codigo){
+                for(let j = i; j < this.datos.length -1; j++){
+                    this.datos[j] = this.datos[j + 1];
+                }
+                this.datos.pop();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    insertar(producto, lugarnuevo){
+        for(let i = this.datos.length; i > lugarnuevo; i--){
+            this.datos[i] = this.datos[i - 1];
+        }
+        this.datos[lugarnuevo] = producto;
+    }
+
+    listar(){
+        let texto = "";
+        for(let i = 0; i < this.datos.length; i++){
+            texto += this.datos[i].info() + "\n";
+        }
+        return texto;
+    }
+
+    extraer(codigo) {
+        if(this.datos.length == 0){
+            return null;
+        }
+        let primerelemento = this.datos[0];
+        for(let i = 0; i < this.datos.length; i++){
+            this.datos[i] = this.datos[i + 1];
+        }
+        this.datos.pop();
+        return primerelemento;
+    }   
+}
+
+let inventario = new Inventario();
+let nuevo = new Productos(3456, "Jabon", 45, 23);
+inventario.agregar(nuevo);
+inventario.eliminar(nuevo);
+inventario.buscar(nuevo);
+inventario.extraer(nuevo);
+inventario.insertar(nuevo);
+inventario.listar(nuevo);
+
+const btnAdd = document.getElementById('btnAdd');
+btnAdd.addEventListener('click', () => {
+    let codigo = document.getElementById('textcodigo').value;
+    let nombre = document.getElementById('textnombre').value;
+    let cantidad = document.getElementById('textcantidad').value;
+    let costo = document.getElementById('textcosto').value;
+    let nuevoproducto = new Productos(codigo, nombre, cantidad, costo);
+
+    inventario.agregar(nuevoproducto);
+    let div = document.getElementById('detalles');
+    div.innerHTML = "<p> Se agrego </p>" + nuevoproducto.infoHtml();
+
+});
+
+const btnList = document.getElementById('btnList');
+btnList.addEventListener('click', () => {
+    
+    let texto = inventario.listar();
+    let div = document.getElementById('detalles');
+    div.innerHTML = "<p> Se listo </p><" + texto;
+
+});
+
+const btnSearch = document.getElementById('btnSearch');
+btnSearch.addEventListener('click', () => {
+    
+    let codigo = document.getElementById('textcodigo').value;
+    let busqueda = inventario.buscar(codigo);
+    let div = document.getElementById('detalles');
+
+    if(busqueda){
+        div.innerHTML = "<p>Resultados encontrados:</p>" + busqueda.infoHtml();
+    }else{
+        div.innerHTML = "<p>Resultados no encontrados:</p>";
+    }
+    
+
+});
+
+const btnDelete = document.getElementById('btnDelete');
+btnDelete.addEventListener('click', () => {
+    let codigo = document.getElementById('textcodigo').value;
+    let eliminar = inventario.eliminar(codigo);
+    let div = document.getElementById('detalles');
+    
+    if(eliminar){
+        div.innerHTML = "<p>Producto eliminado</p>";
+    } else {
+        div.innerHTML = "<p>No se encontro producto para eliminar</p>";
+    }
+    
+
+});
+
+const btnInsert = document.getElementById('btnInsert');
+btnInsert.addEventListener('click', () => {
+    let codigo = document.getElementById('textcodigo').value;
+    let nombre = document.getElementById('textnombre').value;
+    let cantidad = document.getElementById('textcantidad').value;
+    let costo = document.getElementById('textcosto').value
+    let producto = new Productos(codigo, nombre, cantidad, costo);
+    let lugarnuevo = document.getElementById('textlugarnuevo').value;
+    let inventario = inventario.insertar(producto, lugarnuevo);
+    let div = document.getElementById('detalles');
+
+    div.innerHTML = "<p>Producto insertado en la posición</p>" + producto.infoHtml();
+
+});
+
+const btnExtract = document.getElementById('btnExtract');
+btnExtract.addEventListener('click', () => {
+    let codigo = document.getElementById('textcodigo').value;
+    let extraer = inventario.extraer(codigo);
+    let div = document.getElementById('detalles');
+
+    if(extraer){
+        div.innerHTML = "<p>Primer producto extraido</p>" + extraer.infoHtml();
+    } else{
+        div.innerHTML = "<p>No se pudo extraer</p>";
+    }
+    
+});
+
+    </script>
